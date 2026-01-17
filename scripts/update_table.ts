@@ -59,7 +59,7 @@ async function fetchDifficultyTable(): Promise<{ table: DifficultyTable; version
       if (colspan && parseInt(colspan, 10) >= 4) {
         const versionText = thCells.text().trim()
         // Skip the "Sparkle Shower ALL MUSIC" header or similar top-level headers
-        if (!versionText.includes('ALL MUSIC') && !versionText.includes('Sparkle Shower')) {
+        if (!versionText.includes('ALL MUSIC') && !versionText.includes('Sparkle Shower ALL MUSIC')) {
           currentVersion = versionText
           if (!versionOrder.includes(currentVersion)) {
             versionOrder.push(currentVersion)

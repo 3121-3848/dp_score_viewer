@@ -39,7 +39,7 @@ export function ScoreRow({ chart, sortKey }: ScoreRowProps) {
         title={chart.clearType}
       />
 
-      <span className="text-xs text-gray-500 w-16 shrink-0 truncate hidden sm:block">
+      <span className="text-xs text-gray-500 w-24 shrink-0 truncate hidden sm:block">
         {chart.version}
       </span>
 
