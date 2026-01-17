@@ -13,6 +13,8 @@ export function ScoreRow({ chart, sortKey }: ScoreRowProps) {
 
   const getSortValue = () => {
     switch (sortKey) {
+      case 'version':
+        return ''
       case 'missCount':
         return chart.missCount !== null ? chart.missCount.toString() : '-'
       case 'clearType':
@@ -41,7 +43,7 @@ export function ScoreRow({ chart, sortKey }: ScoreRowProps) {
         {chart.version}
       </span>
 
-      <span className="flex-1 text-sm truncate min-w-0">{chart.title}</span>
+      <span className="flex-1 text-sm truncate min-w-0">{chart.displayTitle}</span>
 
       <span
         className={cn(

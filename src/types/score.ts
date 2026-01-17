@@ -39,6 +39,7 @@ export interface ScoreEntry {
 export interface ParsedChartData {
   version: string
   title: string
+  displayTitle: string
   difficulty: Difficulty
   officialLevel: number
   unofficialLevel: number | null
@@ -51,5 +52,5 @@ export interface ParsedChartData {
   lastPlayDate: string
 }
 
-export type SortKey = 'title' | 'missCount' | 'clearType' | 'lastPlayDate'
+export type SortKey = 'version' | 'title' | 'missCount' | 'clearType' | 'lastPlayDate'
 export type SortDirection = 'asc' | 'desc'

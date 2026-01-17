@@ -9,6 +9,7 @@ function App() {
   const isDataLoaded = useScoreStore((state) => state.isDataLoaded)
   const isLoading = useScoreStore((state) => state.isLoading)
   const chartData = useScoreStore((state) => state.chartData)
+  const clearData = useScoreStore((state) => state.clearData)
 
   useEffect(() => {
     initializeData()
@@ -33,7 +34,7 @@ function App() {
           <>
             <div className="flex justify-end">
               <button
-                onClick={() => useScoreStore.setState({ scores: [], chartData: [] })}
+                onClick={clearData}
                 className="text-sm text-gray-500 hover:text-gray-700 underline"
               >
                 データをクリア

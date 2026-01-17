@@ -13,11 +13,15 @@ import { parseCSV } from '@/lib/csv-parser'
 import { loadDifficultyTable, loadMatchingTable } from '@/lib/data-loader'
 import { CLEAR_TYPE_ORDER } from '@/lib/constants'
 
+const STORAGE_KEY_CSV = 'dp_score_viewer_csv'
+const STORAGE_KEY_ITEMS_PER_PAGE = 'dp_score_viewer_items_per_page'
+
 interface ScoreState {
   // Raw data
   scores: ScoreEntry[]
   difficultyTable: DifficultyTable
   matchingTable: MatchingTable
+  csvText: string
 
   // Processed data
   chartData: ParsedChartData[]
@@ -28,22 +32,28 @@ interface ScoreState {
   sortKey: SortKey
   sortDirection: SortDirection
   selectedLevel: string | null
+  currentPage: number
+  itemsPerPage: number
 
   // Actions
   loadCSV: (csvText: string) => void
+  clearData: () => void
   initializeData: () => Promise<void>
   setSortKey: (key: SortKey) => void
   setSortDirection: (direction: SortDirection) => void
   setSelectedLevel: (level: string | null) => void
+  setCurrentPage: (page: number) => void
+  setItemsPerPage: (count: number) => void
   getChartDataByLevel: () => Map<string, ParsedChartData[]>
   getStats: () => Map<string, Map<ClearType, number>>
 }
 
-function lookupTitle(
-  title: string,
-  matchingTable: MatchingTable
-): string {
-  return matchingTable[title] || title
+function createReverseMatchingTable(matchingTable: MatchingTable): Map<string, string> {
+  const reverse = new Map<string, string>()
+  for (const [csvTitle, tableTitle] of Object.entries(matchingTable)) {
+    reverse.set(tableTitle, csvTitle)
+  }
+  return reverse
 }
 
 function processScores(
@@ -52,38 +62,74 @@ function processScores(
   matchingTable: MatchingTable
 ): ParsedChartData[] {
   const charts: ParsedChartData[] = []
+  const processedCharts = new Set<string>()
 
+  // Create a map from CSV title to score entry
+  const scoreMap = new Map<string, ScoreEntry>()
   for (const score of scores) {
-    const lookupName = lookupTitle(score.title, matchingTable)
-    const diffEntry = difficultyTable[lookupName]
+    scoreMap.set(score.title, score)
+  }
 
-    const difficulties: { key: 'hyper' | 'another' | 'leggendaria'; label: Difficulty }[] = [
-      { key: 'hyper', label: 'HYPER' },
-      { key: 'another', label: 'ANOTHER' },
-      { key: 'leggendaria', label: 'LEGGENDARIA' },
-    ]
+  // Create reverse matching table (table title -> csv title)
+  const reverseMatching = createReverseMatchingTable(matchingTable)
+
+  const difficulties: { key: 'hyper' | 'another' | 'leggendaria'; label: Difficulty }[] = [
+    { key: 'hyper', label: 'HYPER' },
+    { key: 'another', label: 'ANOTHER' },
+    { key: 'leggendaria', label: 'LEGGENDARIA' },
+  ]
+
+  // Process all songs from difficulty table
+  for (const [tableTitle, diffEntry] of Object.entries(difficultyTable)) {
+    // Find corresponding CSV title
+    const csvTitle = reverseMatching.get(tableTitle) || tableTitle
+    const score = scoreMap.get(csvTitle) || scoreMap.get(tableTitle)
 
     for (const { key, label } of difficulties) {
-      const chartScore = score[key]
-      if (!chartScore) continue
+      const diffInfo = diffEntry[key]
+      if (!diffInfo) continue
 
-      const diffInfo = diffEntry?.[key]
-      const unofficialLevel = diffInfo?.unofficial ?? null
+      const chartKey = `${tableTitle}-${label}`
+      if (processedCharts.has(chartKey)) continue
+      processedCharts.add(chartKey)
 
-      charts.push({
-        version: score.version,
-        title: score.title,
-        difficulty: label,
-        officialLevel: chartScore.difficulty,
-        unofficialLevel,
-        score: chartScore.score,
-        pgreat: chartScore.pgreat,
-        great: chartScore.great,
-        missCount: chartScore.missCount,
-        clearType: chartScore.clearType,
-        djLevel: chartScore.djLevel,
-        lastPlayDate: score.lastPlayDate,
-      })
+      const chartScore = score?.[key]
+
+      if (chartScore) {
+        // Has score data
+        charts.push({
+          version: diffEntry.version || score?.version || '',
+          title: csvTitle,
+          displayTitle: tableTitle,
+          difficulty: label,
+          officialLevel: diffInfo.official ?? chartScore.difficulty,
+          unofficialLevel: diffInfo.unofficial ?? null,
+          score: chartScore.score,
+          pgreat: chartScore.pgreat,
+          great: chartScore.great,
+          missCount: chartScore.missCount,
+          clearType: chartScore.clearType,
+          djLevel: chartScore.djLevel,
+          lastPlayDate: score?.lastPlayDate || '',
+        })
+      } else {
+        // NO PLAY entry
+        charts.push({
+          version: diffEntry.version || '',
+          title: tableTitle,
+          displayTitle: tableTitle,
+          difficulty: label,
+          officialLevel: diffInfo.official ?? 0,
+          unofficialLevel: diffInfo.unofficial ?? null,
+          score: 0,
+          pgreat: 0,
+          great: 0,
+          missCount: null,
+          clearType: 'NO PLAY',
+          djLevel: '---',
+          lastPlayDate: '',
+        })
+      }
     }
   }
 
@@ -99,8 +145,11 @@ function sortChartData(
     let comparison = 0
 
     switch (sortKey) {
+      case 'version':
+        comparison = a.version.localeCompare(b.version, 'ja')
+        break
       case 'title':
-        comparison = a.title.localeCompare(b.title, 'ja')
+        comparison = a.displayTitle.localeCompare(b.displayTitle, 'ja')
         break
       case 'missCount':
         const aMiss = a.missCount ?? Infinity
@@ -123,16 +172,64 @@ function sortChartData(
   return sorted
 }
 
+function loadItemsPerPage(): number {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_ITEMS_PER_PAGE)
+    if (stored) {
+      const value = parseInt(stored, 10)
+      if (!isNaN(value) && value > 0) return value
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return 10
+}
+
+function saveItemsPerPage(count: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_ITEMS_PER_PAGE, count.toString())
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+function loadStoredCSV(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEY_CSV) || ''
+  } catch {
+    return ''
+  }
+}
+
+function saveCSV(csvText: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_CSV, csvText)
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+function clearStoredCSV(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY_CSV)
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export const useScoreStore = create<ScoreState>((set, get) => ({
   scores: [],
   difficultyTable: {},
   matchingTable: {},
+  csvText: '',
   chartData: [],
   isLoading: false,
   isDataLoaded: false,
   sortKey: 'clearType',
   sortDirection: 'asc',
   selectedLevel: null,
+  currentPage: 1,
+  itemsPerPage: loadItemsPerPage(),
 
   initializeData: async () => {
     set({ isLoading: true })
@@ -141,7 +238,14 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
         loadDifficultyTable(),
         loadMatchingTable(),
       ])
+
+      // Load stored CSV if available
+      const storedCSV = loadStoredCSV()
       set({ difficultyTable, matchingTable, isDataLoaded: true })
+
+      if (storedCSV) {
+        get().loadCSV(storedCSV)
+      }
     } catch (error) {
       console.error('Failed to initialize data:', error)
     } finally {
@@ -154,23 +258,41 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
     const scores = parseCSV(csvText)
     const chartData = processScores(scores, difficultyTable, matchingTable)
     const sortedChartData = sortChartData(chartData, sortKey, sortDirection)
-    set({ scores, chartData: sortedChartData })
+
+    // Save to localStorage
+    saveCSV(csvText)
+
+    set({ scores, csvText, chartData: sortedChartData, currentPage: 1 })
+  },
+
+  clearData: () => {
+    clearStoredCSV()
+    set({ scores: [], csvText: '', chartData: [], currentPage: 1 })
   },
 
   setSortKey: (key: SortKey) => {
     const { chartData, sortDirection } = get()
     const sortedChartData = sortChartData(chartData, key, sortDirection)
-    set({ sortKey: key, chartData: sortedChartData })
+    set({ sortKey: key, chartData: sortedChartData, currentPage: 1 })
   },
 
   setSortDirection: (direction: SortDirection) => {
     const { chartData, sortKey } = get()
     const sortedChartData = sortChartData(chartData, sortKey, direction)
-    set({ sortDirection: direction, chartData: sortedChartData })
+    set({ sortDirection: direction, chartData: sortedChartData, currentPage: 1 })
   },
 
   setSelectedLevel: (level: string | null) => {
-    set({ selectedLevel: level })
+    set({ selectedLevel: level, currentPage: 1 })
+  },
+
+  setCurrentPage: (page: number) => {
+    set({ currentPage: page })
+  },
+
+  setItemsPerPage: (count: number) => {
+    saveItemsPerPage(count)
+    set({ itemsPerPage: count, currentPage: 1 })
   },
 
   getChartDataByLevel: () => {
