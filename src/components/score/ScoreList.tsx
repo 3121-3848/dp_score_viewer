@@ -46,7 +46,7 @@ export function ScoreList() {
     return levels.sort((a, b) => {
       if (a === 'Unknown') return 1
       if (b === 'Unknown') return -1
-      return parseFloat(b) - parseFloat(a)
+      return parseFloat(a) - parseFloat(b)
     })
   }, [chartDataByLevel])
 
