@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
     "update:table": "tsx scripts/update_table.ts",
     "update:matching": "tsx scripts/update_matching.ts"
   },
@@ -27,6 +29,10 @@
     "@radix-ui/react-label": "^2.1.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^14.2.0",
+    "jsdom": "^24.0.0",
+    "vitest": "^2.0.0",
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.0",
     "@types/papaparse": "^5.3.14",
