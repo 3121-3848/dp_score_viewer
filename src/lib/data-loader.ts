@@ -29,3 +29,17 @@ export async function loadMatchingTable(): Promise<MatchingTable> {
     return {}
   }
 }
+
+export async function loadVersionOrder(): Promise<string[]> {
+  try {
+    const response = await fetch(`${BASE_URL}data/version_order.json`)
+    if (!response.ok) {
+      console.warn('Failed to load version order')
+      return []
+    }
+    return await response.json()
+  } catch (error) {
+    console.warn('Error loading version order:', error)
+    return []
+  }
+}

@@ -50,6 +50,8 @@ https://zasa.sakura.ne.jp/dp/run.php の難易度表の構造は次の例のよ�
 
 ただし、クリアタイプは色だけでラベルとして示してください（FULL COMBO: オレンジ、EX HARD: 黄、HARD: 赤、CLEAR: 青、EASY: 緑、ASSIST: 紫、FAILED: 濃灰、NO PLAY: 薄灰）。
 
+バージョン情報およびその順序付けは、DP 非公式難易度表の情報を使用してください。
+
 HYPER / ANOTHER / LEGGENDARIA は、黄色の H 、赤色の A、紫色の L で略記してください。
 
 ソート条件の値には、例えばミスカウント順でソートしているならミスカウントの値が入ります。

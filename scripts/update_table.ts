@@ -20,7 +20,7 @@ interface DifficultyTable {
 }
 
 function parseDifficultyCell(cell: string): DifficultyInfo | null {
-  if (!cell || cell.trim() === '') return null
+  if (!cell || cell.trim() === '' || cell.trim() === '-') return null
 
   // Format: ☆8 (8.5) or just ☆8
   const match = cell.match(/☆(\d+)(?:\s*\((\d+(?:\.\d+)?)\))?/)
@@ -32,7 +32,7 @@ function parseDifficultyCell(cell: string): DifficultyInfo | null {
   }
 }
 
-async function fetchDifficultyTable(): Promise<DifficultyTable> {
+async function fetchDifficultyTable(): Promise<{ table: DifficultyTable; versionOrder: string[] }> {
   const url = 'https://zasa.sakura.ne.jp/dp/run.php'
 
   console.log('Fetching difficulty table from:', url)
@@ -46,26 +46,35 @@ async function fetchDifficultyTable(): Promise<DifficultyTable> {
   const $ = cheerio.load(html)
 
   const table: DifficultyTable = {}
+  const versionOrder: string[] = []
   let currentVersion = ''
 
-  $('table tr').each((_, row) => {
-    const cells = $(row).find('td')
+  $('table.run tr').each((_, row) => {
+    const thCells = $(row).find('th')
+    const tdCells = $(row).find('td')
 
-    // Check if this is a version header row (single cell spanning multiple columns)
-    if (cells.length === 1) {
-      const colspan = cells.attr('colspan')
+    // Check if this is a version header row (th with colspan="4")
+    if (thCells.length === 1) {
+      const colspan = thCells.attr('colspan')
       if (colspan && parseInt(colspan, 10) >= 4) {
-        currentVersion = cells.text().trim()
+        const versionText = thCells.text().trim()
+        // Skip the "Sparkle Shower ALL MUSIC" header or similar top-level headers
+        if (!versionText.includes('ALL MUSIC') && !versionText.includes('Sparkle Shower')) {
+          currentVersion = versionText
+          if (!versionOrder.includes(currentVersion)) {
+            versionOrder.push(currentVersion)
+          }
+        }
         return
       }
     }
 
     // Regular data row: HYPER | ANOTHER | LEGGENDARIA | Title
-    if (cells.length >= 4) {
-      const hyperText = $(cells[0]).text().trim()
-      const anotherText = $(cells[1]).text().trim()
-      const leggendariaText = $(cells[2]).text().trim()
-      const title = $(cells[3]).text().trim()
+    if (tdCells.length >= 4) {
+      const hyperText = $(tdCells[0]).text().trim()
+      const anotherText = $(tdCells[1]).text().trim()
+      const leggendariaText = $(tdCells[2]).text().trim()
+      const title = $(tdCells[3]).text().trim()
 
       if (!title) return
 
@@ -86,15 +95,16 @@ async function fetchDifficultyTable(): Promise<DifficultyTable> {
     }
   })
 
-  return table
+  return { table, versionOrder }
 }
 
 async function main() {
   try {
-    const table = await fetchDifficultyTable()
+    const { table, versionOrder } = await fetchDifficultyTable()
     const entryCount = Object.keys(table).length
 
     console.log(`Parsed ${entryCount} entries`)
+    console.log(`Found ${versionOrder.length} versions:`, versionOrder.slice(0, 5).join(', '), '...')
 
     // Save to difficulty_table directory
     const outputDir = path.join(process.cwd(), 'difficulty_table')
@@ -104,7 +114,11 @@ async function main() {
 
     const outputPath = path.join(outputDir, 'difficulty_table.json')
     fs.writeFileSync(outputPath, JSON.stringify(table, null, 2), 'utf-8')
-    console.log(`Saved to: ${outputPath}`)
+    console.log(`Saved table to: ${outputPath}`)
+
+    const versionOrderPath = path.join(outputDir, 'version_order.json')
+    fs.writeFileSync(versionOrderPath, JSON.stringify(versionOrder, null, 2), 'utf-8')
+    console.log(`Saved version order to: ${versionOrderPath}`)
 
     // Also copy to public/data for the web app
     const publicDataDir = path.join(process.cwd(), 'public', 'data')
@@ -114,7 +128,11 @@ async function main() {
 
     const publicOutputPath = path.join(publicDataDir, 'difficulty_table.json')
     fs.writeFileSync(publicOutputPath, JSON.stringify(table, null, 2), 'utf-8')
-    console.log(`Copied to: ${publicOutputPath}`)
+    console.log(`Copied table to: ${publicOutputPath}`)
+
+    const publicVersionOrderPath = path.join(publicDataDir, 'version_order.json')
+    fs.writeFileSync(publicVersionOrderPath, JSON.stringify(versionOrder, null, 2), 'utf-8')
+    console.log(`Copied version order to: ${publicVersionOrderPath}`)
 
   } catch (error) {
     console.error('Error:', error)

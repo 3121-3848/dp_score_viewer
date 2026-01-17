@@ -10,7 +10,7 @@ import {
   Difficulty,
 } from '@/types'
 import { parseCSV } from '@/lib/csv-parser'
-import { loadDifficultyTable, loadMatchingTable } from '@/lib/data-loader'
+import { loadDifficultyTable, loadMatchingTable, loadVersionOrder } from '@/lib/data-loader'
 import { CLEAR_TYPE_ORDER } from '@/lib/constants'
 
 const STORAGE_KEY_CSV = 'dp_score_viewer_csv'
@@ -21,6 +21,7 @@ interface ScoreState {
   scores: ScoreEntry[]
   difficultyTable: DifficultyTable
   matchingTable: MatchingTable
+  versionOrder: string[]
   csvText: string
 
   // Processed data
@@ -98,7 +99,7 @@ function processScores(
       if (chartScore) {
         // Has score data
         charts.push({
-          version: diffEntry.version || score?.version || '',
+          version: diffEntry.version || '',
           title: csvTitle,
           displayTitle: tableTitle,
           difficulty: label,
@@ -139,14 +140,20 @@ function processScores(
 function sortChartData(
   data: ParsedChartData[],
   sortKey: SortKey,
-  sortDirection: SortDirection
+  sortDirection: SortDirection,
+  versionOrder: string[]
 ): ParsedChartData[] {
+  const versionIndexMap = new Map<string, number>()
+  versionOrder.forEach((v, i) => versionIndexMap.set(v, i))
+
   const sorted = [...data].sort((a, b) => {
     let comparison = 0
 
     switch (sortKey) {
       case 'version':
-        comparison = a.version.localeCompare(b.version, 'ja')
+        const aVersionIndex = versionIndexMap.get(a.version) ?? 9999
+        const bVersionIndex = versionIndexMap.get(b.version) ?? 9999
+        comparison = aVersionIndex - bVersionIndex
         break
       case 'title':
         comparison = a.displayTitle.localeCompare(b.displayTitle, 'ja')
@@ -221,6 +228,7 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   scores: [],
   difficultyTable: {},
   matchingTable: {},
+  versionOrder: [],
   csvText: '',
   chartData: [],
   isLoading: false,
@@ -234,14 +242,15 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   initializeData: async () => {
     set({ isLoading: true })
     try {
-      const [difficultyTable, matchingTable] = await Promise.all([
+      const [difficultyTable, matchingTable, versionOrder] = await Promise.all([
         loadDifficultyTable(),
         loadMatchingTable(),
+        loadVersionOrder(),
       ])
 
       // Load stored CSV if available
       const storedCSV = loadStoredCSV()
-      set({ difficultyTable, matchingTable, isDataLoaded: true })
+      set({ difficultyTable, matchingTable, versionOrder, isDataLoaded: true })
 
       if (storedCSV) {
         get().loadCSV(storedCSV)
@@ -254,10 +263,10 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   },
 
   loadCSV: (csvText: string) => {
-    const { difficultyTable, matchingTable, sortKey, sortDirection } = get()
+    const { difficultyTable, matchingTable, versionOrder, sortKey, sortDirection } = get()
     const scores = parseCSV(csvText)
     const chartData = processScores(scores, difficultyTable, matchingTable)
-    const sortedChartData = sortChartData(chartData, sortKey, sortDirection)
+    const sortedChartData = sortChartData(chartData, sortKey, sortDirection, versionOrder)
 
     // Save to localStorage
     saveCSV(csvText)
@@ -271,14 +280,14 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   },
 
   setSortKey: (key: SortKey) => {
-    const { chartData, sortDirection } = get()
-    const sortedChartData = sortChartData(chartData, key, sortDirection)
+    const { chartData, sortDirection, versionOrder } = get()
+    const sortedChartData = sortChartData(chartData, key, sortDirection, versionOrder)
     set({ sortKey: key, chartData: sortedChartData, currentPage: 1 })
   },
 
   setSortDirection: (direction: SortDirection) => {
-    const { chartData, sortKey } = get()
-    const sortedChartData = sortChartData(chartData, sortKey, direction)
+    const { chartData, sortKey, versionOrder } = get()
+    const sortedChartData = sortChartData(chartData, sortKey, direction, versionOrder)
     set({ sortDirection: direction, chartData: sortedChartData, currentPage: 1 })
   },
 
