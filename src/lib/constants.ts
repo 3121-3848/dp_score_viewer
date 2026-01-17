@@ -35,6 +35,6 @@ export const CHART_COLORS: Record<ClearType, string> = {
   'CLEAR': '#3b82f6',
   'EASY CLEAR': '#22c55e',
   'ASSIST CLEAR': '#a855f7',
-  'FAILED': '#4b5563',
+  'FAILED': '#9b9da1',
   'NO PLAY': '#d1d5db',
 }
