@@ -189,7 +189,7 @@ export function ScoreList() {
                     <ChevronLeft className="h-4 w-4" />
                     前へ
                   </Button>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 w-16 text-center">
                     {currentPage} / {totalPages}
                   </span>
                   <Button
