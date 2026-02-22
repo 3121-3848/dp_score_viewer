@@ -12,7 +12,7 @@ import { useScoreStore } from '@/stores/score-store'
 import { ScoreRow } from './ScoreRow'
 import { StatsChart } from '@/components/stats/StatsChart'
 import { SortKey } from '@/types'
-import { ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
@@ -143,7 +143,9 @@ export function ScoreList() {
                     onClick={toggleSortDirection}
                     title={sortDirection === 'asc' ? '昇順' : '降順'}
                   >
-                    <ArrowUpDown className="h-4 w-4" />
+                    {sortDirection === 'asc'
+                      ? <ArrowUp className="h-4 w-4" />
+                      : <ArrowDown className="h-4 w-4" />}
                   </Button>
                   <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
                     <SelectTrigger className="w-20">
