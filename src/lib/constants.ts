@@ -4,9 +4,9 @@ export const CLEAR_TYPE_COLORS: Record<ClearType, { bg: string; text: string; la
   'FULLCOMBO CLEAR': { bg: 'bg-orange-500', text: 'text-white', label: 'FC' },
   'EX HARD CLEAR': { bg: 'bg-yellow-400', text: 'text-black', label: 'EXH' },
   'HARD CLEAR': { bg: 'bg-red-500', text: 'text-white', label: 'HARD' },
-  'CLEAR': { bg: 'bg-blue-500', text: 'text-white', label: 'CLR' },
+  'CLEAR': { bg: 'bg-blue-500', text: 'text-white', label: 'CLEAR' },
   'EASY CLEAR': { bg: 'bg-green-500', text: 'text-white', label: 'EASY' },
-  'ASSIST CLEAR': { bg: 'bg-purple-500', text: 'text-white', label: 'AST' },
+  'ASSIST CLEAR': { bg: 'bg-purple-500', text: 'text-white', label: 'ASSIST' },
   'FAILED': { bg: 'bg-gray-600', text: 'text-white', label: 'F' },
   'NO PLAY': { bg: 'bg-gray-300', text: 'text-gray-600', label: 'NP' },
 }

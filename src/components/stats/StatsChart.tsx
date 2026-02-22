@@ -7,7 +7,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  Legend,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useScoreStore } from '@/stores/score-store'
@@ -20,7 +19,22 @@ interface ChartDataItem {
   [key: string]: number | string
 }
 
-export function StatsChart() {
+const CLEAR_TYPE_LABELS: Record<string, string> = {
+  'FULLCOMBO CLEAR': 'FC',
+  'EX HARD CLEAR': 'EXH',
+  'HARD CLEAR': 'HARD',
+  'CLEAR': 'CLEAR',
+  'EASY CLEAR': 'EASY',
+  'ASSIST CLEAR': 'ASSIST',
+  'FAILED': 'F',
+  'NO PLAY': 'NP',
+}
+
+interface StatsChartProps {
+  onLevelClick?: (level: string) => void
+}
+
+export function StatsChart({ onLevelClick }: StatsChartProps) {
   const chartData = useScoreStore((state) => state.chartData)
   const getStats = useScoreStore((state) => state.getStats)
 
@@ -61,12 +75,31 @@ export function StatsChart() {
         <CardTitle>クリア状況統計</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Custom legend – wraps consistently on all screen sizes */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mb-4">
+          {CLEAR_TYPE_ORDER.map((clearType) => (
+            <div key={clearType} className="flex items-center gap-1 text-sm">
+              <div
+                className="w-3 h-3 rounded-sm flex-shrink-0"
+                style={{ backgroundColor: CHART_COLORS[clearType] }}
+              />
+              <span>{CLEAR_TYPE_LABELS[clearType]}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="h-[400px] sm:h-[500px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={barData}
               layout="vertical"
-              margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
+              margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+              onClick={(data) => {
+                if (onLevelClick && data && data.activeLabel) {
+                  onLevelClick(data.activeLabel as string)
+                }
+              }}
+              style={{ cursor: onLevelClick ? 'pointer' : 'default' }}
             >
               <XAxis type="number" />
               <YAxis type="category" dataKey="level" width={50} />
@@ -86,29 +119,16 @@ export function StatsChart() {
                               className="w-3 h-3 rounded"
                               style={{ backgroundColor: p.color }}
                             />
-                            <span>{p.dataKey}: {p.value} ({percent}%)</span>
+                            <span>{CLEAR_TYPE_LABELS[p.dataKey as string] ?? p.dataKey}: {p.value} ({percent}%)</span>
                           </div>
                         )
                       })}
                       <p className="text-sm mt-2 text-gray-500">合計: {total}</p>
+                      {onLevelClick && (
+                        <p className="text-xs mt-1 text-blue-500">クリックしてスコア一覧へ</p>
+                      )}
                     </div>
                   )
-                }}
-              />
-              <Legend
-                wrapperStyle={{ paddingTop: 20 }}
-                formatter={(value) => {
-                  const labels: Record<string, string> = {
-                    'FULLCOMBO CLEAR': 'FC',
-                    'EX HARD CLEAR': 'EXH',
-                    'HARD CLEAR': 'HARD',
-                    'CLEAR': 'CLR',
-                    'EASY CLEAR': 'EASY',
-                    'ASSIST CLEAR': 'AST',
-                    'FAILED': 'F',
-                    'NO PLAY': 'NP',
-                  }
-                  return labels[value] || value
                 }}
               />
               {CLEAR_TYPE_ORDER.map((clearType) => (
@@ -139,9 +159,13 @@ export function StatsChart() {
             const clearRate = item.total > 0 ? ((clearCount / item.total) * 100).toFixed(1) : '0'
 
             return (
-              <div key={item.level} className="flex items-center gap-2 text-sm">
-                <span className="w-12 font-medium">{item.level}</span>
-                <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden flex">
+              <div
+                key={item.level}
+                className={`flex items-center gap-2 text-sm rounded px-1 ${onLevelClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                onClick={() => onLevelClick?.(item.level)}
+              >
+                <span className="w-10 font-medium flex-shrink-0">{item.level}</span>
+                <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden flex min-w-0">
                   {CLEAR_TYPE_ORDER.map((clearType) => {
                     const count = (item[clearType] || 0) as number
                     if (count === 0) return null
@@ -153,12 +177,12 @@ export function StatsChart() {
                           width: `${percent}%`,
                           backgroundColor: CHART_COLORS[clearType as ClearType],
                         }}
-                        title={`${clearType}: ${count}`}
+                        title={`${CLEAR_TYPE_LABELS[clearType]}: ${count}`}
                       />
                     )
                   })}
                 </div>
-                <span className="w-20 text-right text-gray-500">
+                <span className="w-24 text-right text-gray-500 flex-shrink-0 text-xs">
                   {clearRate}% ({clearCount}/{item.total})
                 </span>
               </div>

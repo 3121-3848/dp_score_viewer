@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -38,6 +38,8 @@ export function ScoreList() {
   const setCurrentPage = useScoreStore((state) => state.setCurrentPage)
   const itemsPerPage = useScoreStore((state) => state.itemsPerPage)
   const setItemsPerPage = useScoreStore((state) => state.setItemsPerPage)
+
+  const [activeTab, setActiveTab] = useState('list')
 
   const chartDataByLevel = useMemo(() => getChartDataByLevel(), [getChartDataByLevel, chartData])
 
@@ -87,9 +89,14 @@ export function ScoreList() {
     }
   }
 
+  const handleLevelClick = (level: string) => {
+    setSelectedLevel(level)
+    setActiveTab('list')
+  }
+
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="list">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full justify-start">
           <TabsTrigger value="list">スコア一覧</TabsTrigger>
           <TabsTrigger value="stats">統計</TabsTrigger>
@@ -192,7 +199,7 @@ export function ScoreList() {
         </TabsContent>
 
         <TabsContent value="stats">
-          <StatsChart />
+          <StatsChart onLevelClick={handleLevelClick} />
         </TabsContent>
       </Tabs>
     </div>
