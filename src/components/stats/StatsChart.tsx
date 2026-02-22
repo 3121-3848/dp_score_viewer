@@ -1,23 +1,16 @@
-import { useMemo } from 'react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { useScoreStore } from '@/stores/score-store'
 import { ClearType } from '@/types'
 import { CLEAR_TYPE_ORDER, CHART_COLORS } from '@/lib/constants'
-
-interface ChartDataItem {
-  level: string
-  total: number
-  [key: string]: number | string
-}
 
 const CLEAR_TYPE_LABELS: Record<string, string> = {
   'FULLCOMBO CLEAR': 'FC',
@@ -30,6 +23,28 @@ const CLEAR_TYPE_LABELS: Record<string, string> = {
   'NO PLAY': 'NP',
 }
 
+type RateTarget = 'fc' | 'exh' | 'hard' | 'clear' | 'easy' | 'assist' | 'played'
+
+const RATE_TARGET_OPTIONS: { value: RateTarget; label: string }[] = [
+  { value: 'fc', label: 'FC' },
+  { value: 'exh', label: 'EXH 以上' },
+  { value: 'hard', label: 'HARD 以上' },
+  { value: 'clear', label: 'CLEAR 以上' },
+  { value: 'easy', label: 'EASY 以上' },
+  { value: 'assist', label: 'ASSIST 以上' },
+  { value: 'played', label: 'プレー済' },
+]
+
+const RATE_TARGET_CLEAR_TYPES: Record<RateTarget, ClearType[]> = {
+  fc: ['FULLCOMBO CLEAR'],
+  exh: ['FULLCOMBO CLEAR', 'EX HARD CLEAR'],
+  hard: ['FULLCOMBO CLEAR', 'EX HARD CLEAR', 'HARD CLEAR'],
+  clear: ['FULLCOMBO CLEAR', 'EX HARD CLEAR', 'HARD CLEAR', 'CLEAR'],
+  easy: ['FULLCOMBO CLEAR', 'EX HARD CLEAR', 'HARD CLEAR', 'CLEAR', 'EASY CLEAR'],
+  assist: ['FULLCOMBO CLEAR', 'EX HARD CLEAR', 'HARD CLEAR', 'CLEAR', 'EASY CLEAR', 'ASSIST CLEAR'],
+  played: ['FULLCOMBO CLEAR', 'EX HARD CLEAR', 'HARD CLEAR', 'CLEAR', 'EASY CLEAR', 'ASSIST CLEAR', 'FAILED'],
+}
+
 interface StatsChartProps {
   onLevelClick?: (level: string) => void
 }
@@ -38,46 +53,82 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
   const chartData = useScoreStore((state) => state.chartData)
   const getStats = useScoreStore((state) => state.getStats)
 
+  const [includeNoPlay, setIncludeNoPlay] = useState(true)
+  const [rateTarget, setRateTarget] = useState<RateTarget>('assist')
+
   const stats = useMemo(() => getStats(), [getStats, chartData])
 
   const barData = useMemo(() => {
-    const data: ChartDataItem[] = []
-
     const sortedLevels = Array.from(stats.keys()).sort((a, b) => {
       if (a === 'Unknown') return 1
       if (b === 'Unknown') return -1
       return parseFloat(a) - parseFloat(b)
     })
 
-    for (const level of sortedLevels) {
+    return sortedLevels.map((level) => {
       const levelStats = stats.get(level)!
-      const item: ChartDataItem = { level, total: 0 }
-
+      const item: { level: string; total: number; [key: string]: number | string } = { level, total: 0 }
       for (const clearType of CLEAR_TYPE_ORDER) {
         const count = levelStats.get(clearType) || 0
         item[clearType] = count
         item.total += count
       }
-
-      data.push(item)
-    }
-
-    return data
+      return item
+    })
   }, [stats])
 
-  if (chartData.length === 0) {
-    return null
-  }
+  if (chartData.length === 0) return null
+
+  const visibleTypes = includeNoPlay
+    ? CLEAR_TYPE_ORDER
+    : CLEAR_TYPE_ORDER.filter((t) => t !== 'NO PLAY')
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-3 py-3">
         <CardTitle>クリア状況統計</CardTitle>
       </CardHeader>
-      <CardContent>
-        {/* Custom legend – wraps consistently on all screen sizes */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 mb-4">
-          {CLEAR_TYPE_ORDER.map((clearType) => (
+      <CardContent className="px-3 pb-3 pt-0">
+        {/* Options */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex rounded-md overflow-hidden border border-gray-200">
+            <Button
+              variant={includeNoPlay ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none border-0"
+              onClick={() => setIncludeNoPlay(true)}
+            >
+              NO PLAY 含む
+            </Button>
+            <Button
+              variant={!includeNoPlay ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none border-0 border-l border-gray-200"
+              onClick={() => setIncludeNoPlay(false)}
+            >
+              除く
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">割合対象</span>
+            <Select value={rateTarget} onValueChange={(v) => setRateTarget(v as RateTarget)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RATE_TARGET_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
+          {visibleTypes.map((clearType) => (
             <div key={clearType} className="flex items-center gap-1 text-sm">
               <div
                 className="w-3 h-3 rounded-sm flex-shrink-0"
@@ -88,75 +139,16 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
           ))}
         </div>
 
-        <div className="h-[400px] sm:h-[500px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={barData}
-              layout="vertical"
-              margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-              onClick={(data) => {
-                if (onLevelClick && data && data.activeLabel) {
-                  onLevelClick(data.activeLabel as string)
-                }
-              }}
-              style={{ cursor: onLevelClick ? 'pointer' : 'default' }}
-            >
-              <XAxis type="number" />
-              <YAxis type="category" dataKey="level" width={50} />
-              <Tooltip
-                content={({ payload, label }) => {
-                  if (!payload || payload.length === 0) return null
-                  const total = payload.reduce((sum, p) => sum + (Number(p.value) || 0), 0)
-                  return (
-                    <div className="bg-white border rounded-lg shadow-lg p-3">
-                      <p className="font-bold mb-2">難易度 {label}</p>
-                      {payload.map((p) => {
-                        if (Number(p.value) === 0) return null
-                        const percent = ((Number(p.value) / total) * 100).toFixed(1)
-                        return (
-                          <div key={p.dataKey} className="flex items-center gap-2 text-sm">
-                            <div
-                              className="w-3 h-3 rounded"
-                              style={{ backgroundColor: p.color }}
-                            />
-                            <span>{CLEAR_TYPE_LABELS[p.dataKey as string] ?? p.dataKey}: {p.value} ({percent}%)</span>
-                          </div>
-                        )
-                      })}
-                      <p className="text-sm mt-2 text-gray-500">合計: {total}</p>
-                      {onLevelClick && (
-                        <p className="text-xs mt-1 text-blue-500">クリックしてスコア一覧へ</p>
-                      )}
-                    </div>
-                  )
-                }}
-              />
-              {CLEAR_TYPE_ORDER.map((clearType) => (
-                <Bar
-                  key={clearType}
-                  dataKey={clearType}
-                  stackId="a"
-                  fill={CHART_COLORS[clearType]}
-                >
-                  {barData.map((_, index) => (
-                    <Cell key={`cell-${index}`} />
-                  ))}
-                </Bar>
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="mt-6 space-y-2">
+        {/* Bar rows */}
+        <div className="space-y-2">
           {barData.map((item) => {
             const getCount = (key: string) => Number(item[key]) || 0
-            const clearCount = getCount('FULLCOMBO CLEAR') +
-              getCount('EX HARD CLEAR') +
-              getCount('HARD CLEAR') +
-              getCount('CLEAR') +
-              getCount('EASY CLEAR') +
-              getCount('ASSIST CLEAR')
-            const clearRate = item.total > 0 ? ((clearCount / item.total) * 100).toFixed(1) : '0'
+            const noPlayCount = getCount('NO PLAY')
+            const denominator = includeNoPlay ? item.total : item.total - noPlayCount
+            const targetCount = RATE_TARGET_CLEAR_TYPES[rateTarget].reduce(
+              (sum, ct) => sum + getCount(ct), 0
+            )
+            const rate = denominator > 0 ? ((targetCount / denominator) * 100).toFixed(1) : '0'
 
             return (
               <div
@@ -166,10 +158,10 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
               >
                 <span className="w-10 font-medium flex-shrink-0">{item.level}</span>
                 <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden flex min-w-0">
-                  {CLEAR_TYPE_ORDER.map((clearType) => {
-                    const count = (item[clearType] || 0) as number
-                    if (count === 0) return null
-                    const percent = (count / item.total) * 100
+                  {visibleTypes.map((clearType) => {
+                    const count = getCount(clearType)
+                    if (count === 0 || denominator === 0) return null
+                    const percent = (count / denominator) * 100
                     return (
                       <div
                         key={clearType}
@@ -183,7 +175,7 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
                   })}
                 </div>
                 <span className="w-24 text-right text-gray-500 flex-shrink-0 text-xs">
-                  {clearRate}% ({clearCount}/{item.total})
+                  {rate}% ({targetCount}/{denominator})
                 </span>
               </div>
             )
