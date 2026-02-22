@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -39,7 +39,22 @@ export function ScoreList() {
   const itemsPerPage = useScoreStore((state) => state.itemsPerPage)
   const setItemsPerPage = useScoreStore((state) => state.setItemsPerPage)
 
-  const [activeTab, setActiveTab] = useState('list')
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.slice(1)
+    return hash === 'stats' ? 'stats' : 'list'
+  })
+
+  useEffect(() => {
+    if (!window.location.hash) {
+      window.history.replaceState(null, '', `#${activeTab}`)
+    }
+  }, [])
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    window.location.hash = value
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
 
   const chartDataByLevel = useMemo(() => getChartDataByLevel(), [getChartDataByLevel, chartData])
 
@@ -91,12 +106,12 @@ export function ScoreList() {
 
   const handleLevelClick = (level: string) => {
     setSelectedLevel(level)
-    setActiveTab('list')
+    handleTabChange('list')
   }
 
   return (
     <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="w-full justify-start">
           <TabsTrigger value="list">スコア一覧</TabsTrigger>
           <TabsTrigger value="stats">統計</TabsTrigger>
