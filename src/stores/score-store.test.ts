@@ -161,7 +161,7 @@ describe('useScoreStore', () => {
 
       expect(result.size).toBe(2)
       expect(result.get('10.5')).toHaveLength(2)
-      expect(result.get('11')).toHaveLength(1)
+      expect(result.get('11.0')).toHaveLength(1)
     })
 
     it('should handle null unofficial level as Unknown', () => {
@@ -202,7 +202,7 @@ describe('useScoreStore', () => {
       expect(level105Stats?.get('CLEAR')).toBe(2)
       expect(level105Stats?.get('HARD CLEAR')).toBe(1)
 
-      const level11Stats = result.get('11')
+      const level11Stats = result.get('11.0')
       expect(level11Stats?.get('FAILED')).toBe(1)
     })
   })

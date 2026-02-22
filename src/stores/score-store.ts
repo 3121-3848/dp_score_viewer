@@ -309,7 +309,7 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
     const byLevel = new Map<string, ParsedChartData[]>()
 
     for (const chart of chartData) {
-      const level = chart.unofficialLevel?.toString() ?? 'Unknown'
+      const level = chart.unofficialLevel != null ? chart.unofficialLevel.toFixed(1) : 'Unknown'
       if (!byLevel.has(level)) {
         byLevel.set(level, [])
       }
@@ -324,7 +324,7 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
     const stats = new Map<string, Map<ClearType, number>>()
 
     for (const chart of chartData) {
-      const level = chart.unofficialLevel?.toString() ?? 'Unknown'
+      const level = chart.unofficialLevel != null ? chart.unofficialLevel.toFixed(1) : 'Unknown'
       if (!stats.has(level)) {
         stats.set(level, new Map())
       }
