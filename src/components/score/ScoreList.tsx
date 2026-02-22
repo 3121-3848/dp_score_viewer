@@ -171,6 +171,11 @@ export function ScoreList() {
                     sortKey={sortKey}
                   />
                 ))}
+                {Array.from({ length: itemsPerPage - paginatedCharts.length }).map((_, i) => (
+                  <div key={`spacer-${i}`} className="flex items-center py-2 px-3 border-b border-gray-100">
+                    <div className="h-6" />
+                  </div>
+                ))}
               </div>
 
               {totalPages > 1 && (
