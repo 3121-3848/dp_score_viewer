@@ -30,6 +30,8 @@ export const DIFFICULTY_BADGES: Record<Difficulty, { bg: string; text: string; l
 
 export const VERSION_ABBREVIATIONS: Record<string, string> = {
   '1st&substream': '1st',
+  '1st style': '1st',
+  'substream': 'sub',
   '2nd style': '2nd',
   '3rd style': '3rd',
   '4th style': '4th',
