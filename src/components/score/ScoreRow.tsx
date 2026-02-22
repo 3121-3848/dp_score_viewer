@@ -1,5 +1,5 @@
 import { ParsedChartData, SortKey } from '@/types'
-import { CLEAR_TYPE_COLORS, DIFFICULTY_BADGES } from '@/lib/constants'
+import { CLEAR_TYPE_COLORS, DIFFICULTY_BADGES, VERSION_ABBREVIATIONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 interface ScoreRowProps {
@@ -39,8 +39,9 @@ export function ScoreRow({ chart, sortKey }: ScoreRowProps) {
         title={chart.clearType}
       />
 
-      <span className="text-xs text-gray-500 w-24 shrink-0 truncate">
-        {chart.version}
+      <span className="text-xs text-gray-500 w-10 sm:w-24 shrink-0 truncate">
+        <span className="sm:hidden">{VERSION_ABBREVIATIONS[chart.version] ?? chart.version}</span>
+        <span className="hidden sm:inline">{chart.version}</span>
       </span>
 
       <span className="flex-1 text-sm truncate min-w-0">{chart.displayTitle}</span>
