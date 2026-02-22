@@ -120,11 +120,11 @@ export function ScoreList() {
         <TabsContent value="list" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-lg">
                   難易度表 {currentLevel} ({currentCharts.length}曲)
                 </CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Select value={sortKey} onValueChange={handleSortKeyChange}>
                     <SelectTrigger className="w-32">
                       <SelectValue />
@@ -147,18 +147,6 @@ export function ScoreList() {
                       ? <ArrowUp className="h-4 w-4" />
                       : <ArrowDown className="h-4 w-4" />}
                   </Button>
-                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
-                        <SelectItem key={opt} value={opt.toString()}>
-                          {opt}件
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </CardHeader>
@@ -178,31 +166,45 @@ export function ScoreList() {
                 ))}
               </div>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 py-4 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={goToPreviousPage}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    前へ
-                  </Button>
-                  <span className="text-sm text-gray-600 w-16 text-center">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={goToNextPage}
-                    disabled={currentPage === totalPages}
-                  >
-                    次へ
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center justify-between px-3 py-3 border-t">
+                <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt.toString()}>
+                        {opt}件
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      前へ
+                    </Button>
+                    <span className="text-sm text-gray-600 w-16 text-center">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      次へ
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
