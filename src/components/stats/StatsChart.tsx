@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Settings, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useScoreStore } from '@/stores/score-store'
 import { ClearType } from '@/types'
 import { CLEAR_TYPE_ORDER, CHART_COLORS } from '@/lib/constants'
@@ -20,8 +21,8 @@ const CLEAR_TYPE_LABELS: Record<string, string> = {
   'CLEAR': 'CLEAR',
   'EASY CLEAR': 'EASY',
   'ASSIST CLEAR': 'ASSIST',
-  'FAILED': 'F',
-  'NO PLAY': 'NP',
+  'FAILED': 'FAILED',
+  'NO PLAY': 'NO PLAY',
 }
 
 type RateTarget = 'fc' | 'exh' | 'hard' | 'clear' | 'easy' | 'assist' | 'played'
@@ -85,8 +86,6 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
     ? CLEAR_TYPE_ORDER
     : CLEAR_TYPE_ORDER.filter((t) => t !== 'NO PLAY')
 
-  const currentRateLabel = RATE_TARGET_OPTIONS.find((o) => o.value === rateTarget)?.label ?? ''
-
   return (
     <>
       {settingsOpen && (
@@ -139,13 +138,13 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
         <CardHeader className="px-3 py-3">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-lg leading-tight">クリア状況統計</CardTitle>
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setSettingsOpen(true)}
-              className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs shrink-0"
             >
-              <span className="text-gray-400">{currentRateLabel}{!includeNoPlay ? ' · NP 除く' : ''}</span>
               <Settings className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="px-3 pb-3 pt-0">
