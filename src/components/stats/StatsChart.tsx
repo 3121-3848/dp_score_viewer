@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { useScoreStore } from '@/stores/score-store'
 import { ClearType } from '@/types'
 import { CLEAR_TYPE_ORDER, CHART_COLORS } from '@/lib/constants'
@@ -91,24 +91,15 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
       <CardContent className="px-3 pb-3 pt-0">
         {/* Options */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="flex rounded-md overflow-hidden border border-gray-200">
-            <Button
-              variant={includeNoPlay ? 'default' : 'ghost'}
-              size="sm"
-              className="rounded-none border-0"
-              onClick={() => setIncludeNoPlay(true)}
-            >
-              NO PLAY 含む
-            </Button>
-            <Button
-              variant={!includeNoPlay ? 'default' : 'ghost'}
-              size="sm"
-              className="rounded-none border-0 border-l border-gray-200"
-              onClick={() => setIncludeNoPlay(false)}
-            >
-              除く
-            </Button>
-          </div>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={!includeNoPlay}
+              onChange={(e) => setIncludeNoPlay(!e.target.checked)}
+              className="w-4 h-4 accent-gray-800"
+            />
+            <Label className="cursor-pointer font-normal">NO PLAY を除く</Label>
+          </label>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">割合対象</span>
             <Select value={rateTarget} onValueChange={(v) => setRateTarget(v as RateTarget)}>
