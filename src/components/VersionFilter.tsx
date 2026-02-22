@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { Label } from '@/components/ui/label'
 import { useScoreStore } from '@/stores/score-store'
 import { VERSION_ABBREVIATIONS } from '@/lib/constants'
 
@@ -24,21 +23,23 @@ export function VersionFilter() {
   return (
     <div>
       <p className="text-xs text-gray-500 mb-2">バージョン</p>
-      <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+      <div className="flex flex-wrap gap-1.5">
         {availableVersions.map((version) => {
-          const abbr = VERSION_ABBREVIATIONS[version]
+          const enabled = !disabledVersions.has(version)
+          const label = VERSION_ABBREVIATIONS[version] ?? version
           return (
-            <label key={version} className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={!disabledVersions.has(version)}
-                onChange={() => toggleVersion(version)}
-                className="w-4 h-4 accent-gray-800"
-              />
-              <Label className="cursor-pointer font-normal leading-none">
-                {abbr ? <><span className="font-mono text-xs text-gray-400 w-8 inline-block">{abbr}</span>{version}</> : version}
-              </Label>
-            </label>
+            <button
+              key={version}
+              onClick={() => toggleVersion(version)}
+              title={version}
+              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                enabled
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-400'
+              }`}
+            >
+              {label}
+            </button>
           )
         })}
       </div>
