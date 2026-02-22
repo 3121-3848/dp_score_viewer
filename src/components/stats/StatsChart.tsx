@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Settings, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { VersionFilter } from '@/components/VersionFilter'
 import { useScoreStore } from '@/stores/score-store'
 import { ClearType } from '@/types'
 import { CLEAR_TYPE_ORDER, CHART_COLORS } from '@/lib/constants'
@@ -20,8 +22,8 @@ const CLEAR_TYPE_LABELS: Record<string, string> = {
   'CLEAR': 'CLEAR',
   'EASY CLEAR': 'EASY',
   'ASSIST CLEAR': 'ASSIST',
-  'FAILED': 'F',
-  'NO PLAY': 'NP',
+  'FAILED': 'FAILED',
+  'NO PLAY': 'NO PLAY',
 }
 
 type RateTarget = 'fc' | 'exh' | 'hard' | 'clear' | 'easy' | 'assist' | 'played'
@@ -52,13 +54,14 @@ interface StatsChartProps {
 
 export function StatsChart({ onLevelClick }: StatsChartProps) {
   const chartData = useScoreStore((state) => state.chartData)
+  const disabledVersions = useScoreStore((state) => state.disabledVersions)
   const getStats = useScoreStore((state) => state.getStats)
 
   const [includeNoPlay, setIncludeNoPlay] = useState(true)
   const [rateTarget, setRateTarget] = useState<RateTarget>('easy')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const stats = useMemo(() => getStats(), [getStats, chartData])
+  const stats = useMemo(() => getStats(), [getStats, chartData, disabledVersions])
 
   const barData = useMemo(() => {
     const sortedLevels = Array.from(stats.keys()).sort((a, b) => {
@@ -85,8 +88,6 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
     ? CLEAR_TYPE_ORDER
     : CLEAR_TYPE_ORDER.filter((t) => t !== 'NO PLAY')
 
-  const currentRateLabel = RATE_TARGET_OPTIONS.find((o) => o.value === rateTarget)?.label ?? ''
-
   return (
     <>
       {settingsOpen && (
@@ -105,30 +106,34 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-4">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={!includeNoPlay}
-                  onChange={(e) => setIncludeNoPlay(!e.target.checked)}
-                  className="w-4 h-4 accent-gray-800"
-                />
-                <Label className="cursor-pointer font-normal">NO PLAY を除く</Label>
-              </label>
-              <div className="space-y-1.5">
-                <Label className="text-gray-500 font-normal text-xs">割合対象</Label>
-                <Select value={rateTarget} onValueChange={(v) => setRateTarget(v as RateTarget)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RATE_TARGET_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-5">
+              <VersionFilter />
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500">集計オプション</p>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!includeNoPlay}
+                    onChange={(e) => setIncludeNoPlay(!e.target.checked)}
+                    className="w-4 h-4 accent-gray-800"
+                  />
+                  <Label className="cursor-pointer font-normal">NO PLAY を除く</Label>
+                </label>
+                <div className="space-y-1.5">
+                  <Label className="text-gray-500 font-normal text-xs">割合対象</Label>
+                  <Select value={rateTarget} onValueChange={(v) => setRateTarget(v as RateTarget)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RATE_TARGET_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
@@ -139,13 +144,13 @@ export function StatsChart({ onLevelClick }: StatsChartProps) {
         <CardHeader className="px-3 py-3">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-lg leading-tight">クリア状況統計</CardTitle>
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setSettingsOpen(true)}
-              className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs shrink-0"
             >
-              <span className="text-gray-400">{currentRateLabel}{!includeNoPlay ? ' · NP 除く' : ''}</span>
               <Settings className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="px-3 pb-3 pt-0">

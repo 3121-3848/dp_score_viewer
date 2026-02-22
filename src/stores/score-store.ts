@@ -35,6 +35,7 @@ interface ScoreState {
   selectedLevel: string | null
   currentPage: number
   itemsPerPage: number
+  disabledVersions: Set<string>
 
   // Actions
   loadCSV: (csvText: string) => void
@@ -45,6 +46,7 @@ interface ScoreState {
   setSelectedLevel: (level: string | null) => void
   setCurrentPage: (page: number) => void
   setItemsPerPage: (count: number) => void
+  toggleVersion: (version: string) => void
   getChartDataByLevel: () => Map<string, ParsedChartData[]>
   getStats: () => Map<string, Map<ClearType, number>>
 }
@@ -238,6 +240,7 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   selectedLevel: null,
   currentPage: 1,
   itemsPerPage: loadItemsPerPage(),
+  disabledVersions: new Set<string>(),
 
   initializeData: async () => {
     set({ isLoading: true })
@@ -304,11 +307,25 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
     set({ itemsPerPage: count, currentPage: 1 })
   },
 
+  toggleVersion: (version: string) => {
+    const { disabledVersions } = get()
+    const next = new Set(disabledVersions)
+    if (next.has(version)) {
+      next.delete(version)
+    } else {
+      next.add(version)
+    }
+    set({ disabledVersions: next, currentPage: 1 })
+  },
+
   getChartDataByLevel: () => {
-    const { chartData } = get()
+    const { chartData, disabledVersions } = get()
+    const filtered = disabledVersions.size > 0
+      ? chartData.filter((c) => !disabledVersions.has(c.version))
+      : chartData
     const byLevel = new Map<string, ParsedChartData[]>()
 
-    for (const chart of chartData) {
+    for (const chart of filtered) {
       const level = chart.unofficialLevel != null ? chart.unofficialLevel.toFixed(1) : 'Unknown'
       if (!byLevel.has(level)) {
         byLevel.set(level, [])
@@ -320,10 +337,13 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   },
 
   getStats: () => {
-    const { chartData } = get()
+    const { chartData, disabledVersions } = get()
+    const filtered = disabledVersions.size > 0
+      ? chartData.filter((c) => !disabledVersions.has(c.version))
+      : chartData
     const stats = new Map<string, Map<ClearType, number>>()
 
-    for (const chart of chartData) {
+    for (const chart of filtered) {
       const level = chart.unofficialLevel != null ? chart.unofficialLevel.toFixed(1) : 'Unknown'
       if (!stats.has(level)) {
         stats.set(level, new Map())
