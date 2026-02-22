@@ -121,8 +121,10 @@ export function ScoreList() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-lg">
-                  難易度表 {currentLevel} ({currentCharts.length}曲)
+                <CardTitle className="text-lg leading-tight">
+                  <span>難易度表 {currentLevel}</span>
+                  <br />
+                  <span className="text-sm font-normal text-gray-500">({currentCharts.length}曲)</span>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Select value={sortKey} onValueChange={handleSortKeyChange}>
@@ -144,8 +146,8 @@ export function ScoreList() {
                     title={sortDirection === 'asc' ? '昇順' : '降順'}
                   >
                     {sortDirection === 'asc'
-                      ? <ArrowUp className="h-4 w-4" />
-                      : <ArrowDown className="h-4 w-4" />}
+                      ? <ArrowDown className="h-4 w-4" />
+                      : <ArrowUp className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
