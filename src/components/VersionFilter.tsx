@@ -7,6 +7,8 @@ export function VersionFilter() {
   const versionOrder = useScoreStore((state) => state.versionOrder)
   const disabledVersions = useScoreStore((state) => state.disabledVersions)
   const toggleVersion = useScoreStore((state) => state.toggleVersion)
+  const enableAllVersions = useScoreStore((state) => state.enableAllVersions)
+  const disableAllVersions = useScoreStore((state) => state.disableAllVersions)
 
   const availableVersions = useMemo(() => {
     const versionSet = new Set(chartData.map((c) => c.version).filter(Boolean))
@@ -22,7 +24,24 @@ export function VersionFilter() {
 
   return (
     <div>
-      <p className="text-xs text-gray-500 mb-2">バージョン</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-gray-500">バージョン</p>
+        <div className="flex gap-1.5">
+          <button
+            onClick={enableAllVersions}
+            className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            すべて選択
+          </button>
+          <span className="text-xs text-gray-300">|</span>
+          <button
+            onClick={() => disableAllVersions(availableVersions)}
+            className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            すべて解除
+          </button>
+        </div>
+      </div>
       <div className="flex flex-wrap gap-1.5">
         {availableVersions.map((version) => {
           const enabled = !disabledVersions.has(version)
@@ -32,7 +51,7 @@ export function VersionFilter() {
               key={version}
               onClick={() => toggleVersion(version)}
               title={version}
-              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 enabled
                   ? 'bg-gray-800 text-white'
                   : 'bg-gray-100 text-gray-400'
