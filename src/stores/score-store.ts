@@ -47,6 +47,8 @@ interface ScoreState {
   setCurrentPage: (page: number) => void
   setItemsPerPage: (count: number) => void
   toggleVersion: (version: string) => void
+  enableAllVersions: () => void
+  disableAllVersions: (versions: string[]) => void
   getChartDataByLevel: () => Map<string, ParsedChartData[]>
   getStats: () => Map<string, Map<ClearType, number>>
 }
@@ -316,6 +318,14 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
       next.add(version)
     }
     set({ disabledVersions: next, currentPage: 1 })
+  },
+
+  enableAllVersions: () => {
+    set({ disabledVersions: new Set<string>(), currentPage: 1 })
+  },
+
+  disableAllVersions: (versions: string[]) => {
+    set({ disabledVersions: new Set(versions), currentPage: 1 })
   },
 
   getChartDataByLevel: () => {
