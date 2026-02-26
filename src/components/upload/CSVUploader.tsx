@@ -11,6 +11,7 @@ export function CSVUploader() {
   const [isDragging, setIsDragging] = useState(false)
   const [pasteText, setPasteText] = useState('')
   const [isLoadingSample, setIsLoadingSample] = useState(false)
+  const [clipboardError, setClipboardError] = useState('')
 
   const handleFile = useCallback(
     (file: File) => {
@@ -63,6 +64,20 @@ export function CSVUploader() {
       setPasteText('')
     }
   }, [pasteText, loadCSV])
+
+  const handleClipboardRead = useCallback(async () => {
+    setClipboardError('')
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text.trim()) {
+        loadCSV(text)
+      } else {
+        setClipboardError('クリップボードが空です')
+      }
+    } catch {
+      setClipboardError('クリップボードへのアクセスが拒否されました')
+    }
+  }, [loadCSV])
 
   const handleLoadSample = useCallback(async () => {
     setIsLoadingSample(true)
@@ -140,14 +155,20 @@ export function CSVUploader() {
           </div>
 
           <div className="space-y-2">
+            <Button onClick={handleClipboardRead} variant="outline" className="w-full">
+              <Clipboard className="h-4 w-4 mr-2" />
+              クリップボードから読み込む
+            </Button>
+            {clipboardError && (
+              <p className="text-sm text-red-500 text-center">{clipboardError}</p>
+            )}
             <textarea
               className="w-full h-32 p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="CSVデータを貼り付け..."
+              placeholder="またはCSVデータをここに貼り付け..."
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
             />
             <Button onClick={handlePaste} disabled={!pasteText.trim()} className="w-full">
-              <Clipboard className="h-4 w-4 mr-2" />
               貼り付けたデータを読み込む
             </Button>
           </div>
